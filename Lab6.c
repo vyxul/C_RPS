@@ -6,9 +6,10 @@
 #include <string.h>
 #include <pthread.h>
 #include <arpa/inet.h>
-#define PORT 8080
+//#define PORT 8080
 
-void *chooseRPS(void *arg) {
+void *chooseRPS(void *port) {
+    int *port_ptr = (int *)port;
     int sock = 0;
     struct sockaddr_in serv_addr;
     char *rock = "Rock", *paper = "Paper", *scissors = "Scissors";
@@ -24,7 +25,7 @@ void *chooseRPS(void *arg) {
 
     memset(&serv_addr, '0', sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(8080);
+    serv_addr.sin_port = htons(*port_ptr);
 
     if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
         printf("\nInvalid address / Address not supported \n");
@@ -77,6 +78,7 @@ void *test(void *arg) {
 
 int main () {
     pthread_t player_1, testThread;
+    int PORT = 8080, testPort = 8081;
     int returnCode1, returnCode2;
     int server_1, socket_1;
     int server_2, socket_2;
@@ -130,7 +132,7 @@ int main () {
 
     printf("%s\n", request);
 
-    returnCode1 = pthread_create(&player_1, NULL, chooseRPS, NULL);
+    returnCode1 = pthread_create(&player_1, NULL, chooseRPS, &PORT);
 
     if (returnCode1) {
         printf("ERROR; return code from pthread_create() is %d\n", returnCode1);
@@ -143,7 +145,7 @@ int main () {
     }
 
     read(socket_1, buffer, 1024);
-    printf("%s\n", buffer);
+    printf("Thread 1 chose: %s\n", buffer);
 
     if (strcmp(buffer, rock) == 0)
         printf("Paper wraps rock\n");
@@ -159,7 +161,7 @@ int main () {
         perror("listening to 2nd socket");
         exit(EXIT_FAILURE);
     }
-    returnCode2 = pthread_create(&testThread, NULL, test, NULL);
+    returnCode2 = pthread_create(&testThread, NULL, chooseRPS, &testPort);
     if (returnCode2) {
         printf("ERROR on 2nd thread; return code from pthread_create() is %d\n", returnCode2);
         exit(-1);
@@ -169,7 +171,7 @@ int main () {
         exit(EXIT_FAILURE);
     }
     read(socket_2, buffer, 1024);
-    printf("%s\n", buffer);
+    printf("Thread 2 sent: %s\n", buffer);
     pthread_join(testThread, NULL);
 
     return 0;
