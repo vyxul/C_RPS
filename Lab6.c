@@ -6,6 +6,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <time.h>
 //#define PORT 8080
 
 void *chooseRPS(void *port) {
@@ -15,7 +16,7 @@ void *chooseRPS(void *port) {
     char *rock = "Rock", *paper = "Paper", *scissors = "Scissors";
     
     time_t t;
-    srand((unsigned) time(&t));
+    srand((unsigned) time(&t) % *port_ptr);
     int choice = rand() % 3;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -147,16 +148,19 @@ int main () {
     read(socket_1, buffer, 1024);
     printf("Thread 1 chose: %s\n", buffer);
 
+    /*
     if (strcmp(buffer, rock) == 0)
         printf("Paper wraps rock\n");
     else if (strcmp(buffer, paper) == 0)
         printf("Scissors cuts paper\n");
     else if (strcmp(buffer, scissors) == 0)
         printf("Rock breaks scissors\n");
+    */
 
     pthread_join(player_1, NULL);
 
     //using testThread
+    memset(buffer, 0, sizeof(buffer));
     if (listen(server_2, 3) < 0) {
         perror("listening to 2nd socket");
         exit(EXIT_FAILURE);
